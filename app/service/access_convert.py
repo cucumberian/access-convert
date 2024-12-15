@@ -127,9 +127,7 @@ def _zip_dir(dir_to_archive: str, archive_name: str, save_dir: str) -> bytes:
         return bytes
 
 
-def access_convert(
-    access_file: UploadFile, db_connect_schema: DbConnectSchema
-) -> bytes:
+def access_convert(access_file: UploadFile) -> bytes:
     save_dir = Config.SAVE_DIR
     save_filename = _save_file(file=access_file, save_dir=save_dir)
     random_subdir_name = os.urandom(8).hex()

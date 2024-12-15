@@ -14,11 +14,6 @@ templates = Jinja2Templates(directory="templates")
 
 
 @index_router.get("/")
-def index():
-    return {"message": "Hello World"}
-
-
-@index_router.get("/convert")
 def get_html_page_template(request: Request):
     response = templates.TemplateResponse("convert.html", {"request": request})
     return response
@@ -39,9 +34,9 @@ def validate_db_connect_schema(
 @index_router.post("/convert")
 def get_access_db(
     access_file: UploadFile,
-    db_connect_schema: DbConnectSchema = Depends(validate_db_connect_schema),
+    # db_connect_schema: DbConnectSchema = Depends(validate_db_connect_schema),
 ):
-    archive_bytes = access_convert(access_file, db_connect_schema)
+    archive_bytes = access_convert(access_file)
     return Response(
         content=archive_bytes,
         media_type="application/zip",

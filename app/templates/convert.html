@@ -11,12 +11,14 @@
 
 </head>
 
-<body class="container-sm fs-6 d-flex flex-column justify-content-center" style="height: 100vh; ">
+<body class="container-sm fs-6 d-flex flex-column justify-content-center align-items-center" style="height: 100vh; ">
+    <h1 class="mb-4 text-dark fs-3">Minini access converter</h1>
+
     <section id="send-section" class="d-flex flex-column align-items-center gap-4">
-        <form action="" method="post" enctype="multipart/form-data" class="d-flex flex-column"
+        <form id="send-access-form" enctype="multipart/form-data" class="d-flex flex-column"
             style="max-width: 600px; gap: 20px">
 
-            <div>
+            <!-- <div>
                 <legend for="database" class="fs-6 form-label">имя базы данных</legend>
 
                 <input required class="form-control" type="text" id="database" name="database">
@@ -41,16 +43,16 @@
                     <input class="form-control " type="password" name="password" id="password" placeholder="пароль">
 
                 </div>
-            </fieldset>
+            </fieldset> -->
 
             <fieldset>
-                <label class="form-label" for="access_file">access файл</label>
-                <input type="file" name="access_file" id="access_file" class="form-control" required
+                <label class="form-label" for="access_file">Add access file</label>
+                <input type="file" name="access_file" id="access_file" class="form-control"
                     accept=".mdb,.accdb">
 
             </fieldset>
 
-            <input type="submit" value="Отправить" class="btn btn-primary">
+            <input type="submit" value="Convert access file" class="btn btn-primary">
         </form>
     </section>
 </body>
@@ -72,33 +74,33 @@
 
     
     const sectionElement = document.querySelector('#send-section');
-    const inputDatabase = document.querySelector('#database');
-    const inputHost = document.querySelector("#host");
-    const inputPort = document.querySelector("#port");
-    const inputUser = document.querySelector("#user");
-    if (database) inputDatabase.value = database;
-    if (host) inputHost.value = host;
-    if (port) inputPort.value = port;
-    if (user) inputUser.value = user;
+    // const inputDatabase = document.querySelector('#database');
+    // const inputHost = document.querySelector("#host");
+    // const inputPort = document.querySelector("#port");
+    // const inputUser = document.querySelector("#user");
+    // if (database) inputDatabase.value = database;
+    // if (host) inputHost.value = host;
+    // if (port) inputPort.value = port;
+    // if (user) inputUser.value = user;
 
-
-    document.querySelector('form').addEventListener('submit', async (e) => {
+    const formElement = document.querySelector("#send-access-form")
+    formElement.addEventListener('submit', async (e) => {
         e.preventDefault();
         e.stopPropagation();
 
         // Save form values to localStorage
-        localStorage.setItem('database', document.querySelector('#database').value || "");
-        localStorage.setItem('host', document.querySelector('#host').value || "");
-        localStorage.setItem('port', document.querySelector('#port').value || "");
-        localStorage.setItem('user', document.querySelector('#user').value || "");
+        // localStorage.setItem('database', document.querySelector('#database').value || "");
+        // localStorage.setItem('host', document.querySelector('#host').value || "");
+        // localStorage.setItem('port', document.querySelector('#port').value || "");
+        // localStorage.setItem('user', document.querySelector('#user').value || "");
 
         const formData = new FormData();
 
-        formData.append('database', localStorage.getItem('database'));
-        formData.append('host', document.getElementById('host').value);
-        formData.append('port', document.getElementById('port').value);
-        formData.append('user', document.getElementById('user').value);
-        formData.append('password', document.getElementById('password').value);
+        // formData.append('database', localStorage.getItem('database'));
+        // formData.append('host', document.getElementById('host').value);
+        // formData.append('port', document.getElementById('port').value);
+        // formData.append('user', document.getElementById('user').value);
+        // formData.append('password', document.getElementById('password').value);
         formData.append('access_file', document.getElementById('access_file').files[0]);
 
         try {
@@ -107,6 +109,11 @@
                 body: formData
             });
 
+            if (!response.ok) {
+                console.error("error:", result);
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
             // const result = await response.json();
             // console.log('json response:', result);
             const blob = await response.blob();
@@ -114,19 +121,16 @@
             const btn = document.createElement('button');
             btn.classList.add("btn", "btn-success", "mt-8");
             const a = document.createElement('a');
-            a.classList.add("text-white", "text-decoration-none");
-            btn.appendChild(a);
+            // a.classList.add("text-white", "text-decoration-none");
+            // btn.appendChild(a);
             a.href = downloadUrl;
             a.download = 'converted_db.zip';
-            a.text = "Скачать архив";
+            a.text = "Download result";
             
-            sectionElement.appendChild(btn);
+            sectionElement.appendChild(a);
             a.click();
 
-            if (!response.ok) {
-                console.error("error:", result);
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
+            
         } catch (error) {
             console.error('Error:', error);
         }
