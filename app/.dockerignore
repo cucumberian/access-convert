@@ -1,7 +1,6 @@
 __pycache__/
-access/
-temp/
-venv/
 .venv/
+venv/
+temp/
 .env*
 *.env

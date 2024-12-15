@@ -16,4 +16,11 @@ WORKDIR /data/
 COPY access2csv.sh /usr/local/bin/access2csv.sh
 RUN chmod +x /usr/local/bin/access2csv.sh
 
-ENTRYPOINT [ "access2csv.sh" ]
+
+RUN mkdir /app/
+COPY /app/requirements.txt /app/
+RUN pip3 install --no-cache -r /app/requirements.txt
+COPY ./app/ /app/
+WORKDIR /app/
+
+ENTRYPOINT [ "uvicorn", "app:app", "0.0.0.0:8000" ]
