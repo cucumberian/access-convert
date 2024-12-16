@@ -3,7 +3,10 @@ import subprocess
 import shutil
 from enum import Enum
 from fastapi import UploadFile
+
 from schema.db_connect_schema import DbConnectSchema
+from service.pandas_export import csv_to_db
+from db.db import get_engine
 
 from config import Config
 
@@ -79,6 +82,7 @@ def _export_table(
             "mdb-export",
             "-d",
             "\t",
+            "-B",
             access_file_path,
             table,
         ]
@@ -118,6 +122,22 @@ def _export_tables(
     return True
 
 
+def _export_all(
+    access_file_path: str,
+    export_dir: str,
+    export_format: ExportFormat,
+) -> str:
+    export_filename = os.path.join(export_dir, "__all.sql")
+    with open(export_filename, "w", encoding="utf-8") as f:
+        subprocess.run(
+            ["mdb-export", "-I", export_format.value, access_file_path],
+            stdout=f,
+            check=True,
+            text=True,
+        )
+        return export_filename
+
+
 def _zip_dir(dir_to_archive: str, archive_name: str, save_dir: str) -> bytes:
     zip_filename = os.path.join(save_dir, archive_name)
     zip_command = ["zip", "-r", zip_filename, dir_to_archive]
@@ -127,7 +147,27 @@ def _zip_dir(dir_to_archive: str, archive_name: str, save_dir: str) -> bytes:
         return bytes
 
 
-def access_convert(access_file: UploadFile) -> bytes:
+def pandas_process(
+    access_file_path: str, save_dir: str, db_conn_schema: DbConnectSchema,
+):
+    tables = _get_tables(access_file_path)
+    for table in tables:
+        print("table:", table)
+        # pandas_save_dir = os.path.join(save_dir, "pandas")
+        table_file = _export_table(
+            access_file_path,
+            table,
+            save_dir,
+            export_format=ExportFormat.CSV,
+        )
+        engine = get_engine(db_conn_schema)
+        csv_to_db(csv_path=table_file, table_name=table, db_engine=engine)
+
+
+def access_convert(
+    access_file: UploadFile,
+    db_connection_schema: DbConnectSchema | None,
+) -> bytes:
     save_dir = Config.SAVE_DIR
     save_filename = _save_file(file=access_file, save_dir=save_dir)
     random_subdir_name = os.urandom(8).hex()
@@ -151,13 +191,20 @@ def access_convert(access_file: UploadFile) -> bytes:
         output_dir=export_dir_name,
         export_format=ExportFormat.POSTGRESQL,
     )
-
     archive_name = f"{random_subdir_name}.zip"
     archive_bytes = _zip_dir(
         dir_to_archive=export_dir_name,
         archive_name=archive_name,
         save_dir=save_dir,
     )
+
+    if db_connection_schema is not None:
+        pandas_process(
+            save_filename,
+            export_dir_name,
+            db_conn_schema=db_connection_schema,
+        )
+
     os.remove(save_filename)
     os.remove(os.path.join(save_dir, archive_name))
     shutil.rmtree(export_dir_name)

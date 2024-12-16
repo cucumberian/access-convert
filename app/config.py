@@ -1,2 +1,2 @@
 class Config:
-    SAVE_DIR="temp"
+    SAVE_DIR = "temp"

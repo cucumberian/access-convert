@@ -20,25 +20,47 @@ def get_html_page_template(request: Request):
 
 
 def validate_db_connect_schema(
-    host: str = Form(),
-    port: int = Form(),
-    user: str = Form(),
-    password: str = Form(),
-    database: str = Form(),
+    host: str | None = Form(None),
+    port: int | None = Form(None),
+    user: str | None = Form(""),
+    password: str | None = Form(""),
+    database: str | None = Form(None),
 ):
-    return DbConnectSchema(
-        host=host, port=port, user=user, password=password, database=database
-    )
+    try:
+        schema = DbConnectSchema(
+            host=host,
+            port=port,
+            user=user,
+            password=password,
+            database=database,
+        )
+        return schema
+    except Exception:
+        return None
 
 
 @index_router.post("/convert")
 def get_access_db(
     access_file: UploadFile,
-    # db_connect_schema: DbConnectSchema = Depends(validate_db_connect_schema),
+    is_to_db: bool = Form(False),
+    db_connect_schema: DbConnectSchema | None = Depends(validate_db_connect_schema),
 ):
-    archive_bytes = access_convert(access_file)
-    return Response(
-        content=archive_bytes,
-        media_type="application/zip",
-        headers={"Content-Disposition": "attachment; filename=converted_db.zip"},
-    )
+    if not is_to_db:
+        db_connect_schema = None
+    try:
+        archive_bytes = access_convert(
+            access_file,
+            db_connection_schema=db_connect_schema,
+        )
+        return Response(
+            content=archive_bytes,
+            media_type="application/zip",
+            headers={"Content-Disposition": "attachment; filename=converted_db.zip"},
+        )
+    except Exception as e:
+        return Response(
+            content=str(e),
+            media_type="text/plain",
+            status_code=500,
+        )
+    

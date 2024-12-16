@@ -2,3 +2,6 @@ fastapi
 python-multipart
 uvicorn
 jinja2
+sqlalchemy
+psycopg2-binary
+pandas
